@@ -29,7 +29,7 @@ For installation, we follow the official [RaiSim guide](https://raisim.com/secti
 
 ## Demo
 
-We provide some pretrained models to view the output of our method. They are stored in [this folder](./raisimGymTorch/pretrained_policies/).
+We provide some pretrained models to view the output of our method. They are stored in [this folder](./raisimGymTorch/pretrained_policies/). For interactive visualizations, you need to open the unity executable in the [raisimUnity](./raisimUnity/linux/) folder
 
 - To visualize the policy for motion synthesis, run the following from the raisimGymTorch folder:
     ```Shell
