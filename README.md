@@ -29,7 +29,7 @@ For installation, we follow the official [RaiSim guide](https://raisim.com/secti
 
 We provide some pretrained models to view the output of our method. They are stored in [this folder](./raisimGymTorch/pretrained_policies/).
 
-- To visualize the policy for motion synthesis, run:
+- To visualize the policy for motion synthesis, run the following from the raisimGymTorch folder:
     ```Shell
     python raisimGymTorch/env/envs/dgrasp/runner_motion.py -ao -e 'all_objs'  -sd 'pretrained_policies' -w 'full_6000.pt' 
     ```
@@ -39,7 +39,7 @@ We provide some pretrained models to view the output of our method. They are sto
 
    To just visualize one object, add the flag ```-o <obj_id>```.
 
-- If you want to run the policy that was trained for a single object, run the following command:
+- If you want to run the policy that was trained for a single object, run the following command from the raisimGymTorch folder:
     ```Shell
     python raisimGymTorch/env/envs/dgrasp/runner_motion.py -o 12 -e '021_bleach_dexycb' -sd 'pretrained_policies' -w 'full_3000.pt' 
     ```
