@@ -31,6 +31,4 @@ raisimGymTorch/raisimGymTorch/env/bin/
 
 *.pkl
 
-*.csv
-
 *.jpg
