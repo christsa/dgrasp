@@ -16,9 +16,9 @@
 
 ## Info
 
-This code was tested with Python 3.8 on Ubuntu 18.04 and 20.04 and an NVIDIA GeForce RTX 2080 Ti. You require about 1.8GB of space because the repository comes with all the features of the physics simulation.
+This code was tested with Python 3.8 on Ubuntu 18.04 and 20.04 and an NVIDIA GeForce RTX 2080 Ti. You require about 1.8GB of space because the repository comes with all the features of the [RaiSim](https://raisim.com/) physics simulation, as D-Grasp is integrated into RaiSim.
 
-The D-Grasp related code can be found in the raisimGymTorch subfolder. 
+The D-Grasp related code can be found in the [raisimGymTorch](./raisimGymTorch) subfolder. 
 
 ## Installation
 
