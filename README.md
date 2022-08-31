@@ -3,6 +3,7 @@
 
 <img src="docs/image/fig_teaser.png" /> 
 
+Official code release for the CVPR 2022 paper [*D-Grasp: Physically Plausible Dynamic Grasp Synthesis for Hand-Object Interactions*](https://arxiv.org/pdf/2112.03028.pdf).
 
 ### Contents
 
