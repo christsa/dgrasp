@@ -73,6 +73,7 @@ create_executable(kinova src/server/kinova.cpp)
 create_executable(cartPole src/server/cartPole.cpp)
 create_executable(springTest src/server/springTest.cpp)
 create_executable(trackedRobotAndTemplatedURDF src/server/trackedRobotAndTemplatedURDF.cpp)
+create_executable(mpl_hand src/server/mpl_hand.cpp)
 
 # xml reader
 create_executable(xmlRader src/xml/xmlReader.cpp)
