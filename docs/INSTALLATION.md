@@ -64,6 +64,12 @@ $ sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-utils
 
 Make sure that you run raisimUnity executable in ```raisimUnity/<OS>/RaiSimUnity``` before you run the examples.
 
+In Ubuntu 22.04, the following line should be executed to correctly link the package:
+```
+sudo ln -s /lib/x86_64-linux-gnu/libdl.so.2 /lib/x86_64-linux-gnu/libdl.so
+```
+
+
 ## DGrasp Environment Setup
 
 The last part consists of installing the dgrasp environments.
