@@ -2,6 +2,7 @@ from ruamel.yaml import YAML, dump, RoundTripDumper
 from raisimGymTorch.env.bin import dgrasp as mano
 from raisimGymTorch.env.RaisimGymVecEnv import RaisimGymVecEnv as VecEnv
 from raisimGymTorch.helper.raisim_gym_helper import ConfigurationSaver, load_param, tensorboard_launcher
+from raisimGymTorch.env.bin.dgrasp import NormalSampler
 import os
 import time
 import raisimGymTorch.algo.ppo.module as ppo_module
@@ -66,7 +67,7 @@ print(f"Experiment name: \"{args.exp_name}\"")
 task_name = args.exp_name
 ### check if gpu is available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.double)
+#torch.set_default_dtype(torch.double)
 ### directories
 task_path = os.path.dirname(os.path.realpath(__file__))
 home_path = task_path + "/../../../../.."
@@ -124,37 +125,37 @@ if all_obj_train:
         obj_pose_reset_list.append(dict_labels[obj_key]['obj_pose_reset'])
         qpos_reset_list.append(dict_labels[obj_key]['qpos_reset'])
 
-    final_qpos = np.repeat(np.vstack(final_qpos_list),num_repeats,0)
-    final_obj_pos = np.repeat(np.vstack(final_obj_pos_list),num_repeats,0)
-    final_pose = np.repeat(np.vstack(final_pose_list),num_repeats,0)
-    final_ee = np.repeat(np.vstack(final_ee_list),num_repeats,0)
-    final_ee_rel =  np.repeat(np.vstack(final_ee_rel_list),num_repeats,0)
-    final_contact_pos = np.repeat(np.vstack(final_contact_pos_list),num_repeats,0)
-    final_contacts = np.repeat(np.vstack(final_contacts_list),num_repeats,0)
+    final_qpos = np.repeat(np.vstack(final_qpos_list),num_repeats,0).astype('float32')
+    final_obj_pos = np.repeat(np.vstack(final_obj_pos_list),num_repeats,0).astype('float32')
+    final_pose = np.repeat(np.vstack(final_pose_list),num_repeats,0).astype('float32')
+    final_ee = np.repeat(np.vstack(final_ee_list),num_repeats,0).astype('float32')
+    final_ee_rel =  np.repeat(np.vstack(final_ee_rel_list),num_repeats,0).astype('float32')
+    final_contact_pos = np.repeat(np.vstack(final_contact_pos_list),num_repeats,0).astype('float32')
+    final_contacts = np.repeat(np.vstack(final_contacts_list),num_repeats,0).astype('float32')
 
-    obj_w_stacked = np.repeat(np.hstack(obj_w_list),num_repeats,0)
-    obj_dim_stacked = np.repeat(np.vstack(obj_dim_list),num_repeats,0)
+    obj_w_stacked = np.repeat(np.hstack(obj_w_list),num_repeats,0).astype('float32')
+    obj_dim_stacked = np.repeat(np.vstack(obj_dim_list),num_repeats,0).astype('float32')
     obj_type_stacked = np.repeat(np.hstack(obj_type_list),num_repeats,0)
     obj_idx_stacked = np.repeat(np.hstack(obj_idx_list_list),num_repeats,0)
-    obj_pose_reset = np.repeat(np.vstack(obj_pose_reset_list),num_repeats,0)
-    qpos_reset = np.repeat(np.vstack(qpos_reset_list),num_repeats,0)
+    obj_pose_reset = np.repeat(np.vstack(obj_pose_reset_list),num_repeats,0).astype('float32')
+    qpos_reset = np.repeat(np.vstack(qpos_reset_list),num_repeats,0).astype('float32')
 
 ### Load labels for single object
 else:
-    final_qpos = np.repeat(dict_labels[train_obj_id]['final_qpos'],num_repeats,0)
-    final_obj_pos = np.repeat(dict_labels[train_obj_id]['final_obj_pos'],num_repeats,0)
-    final_pose = np.repeat(dict_labels[train_obj_id]['final_pose'],num_repeats,0)
-    final_ee = np.repeat(dict_labels[train_obj_id]['final_ee'],num_repeats,0)
-    final_ee_rel = np.repeat(dict_labels[train_obj_id]['final_ee_rel'],num_repeats,0)
-    final_contact_pos = np.repeat(dict_labels[train_obj_id]['final_contact_pos'],num_repeats,0)
-    final_contacts = np.repeat(dict_labels[train_obj_id]['final_contacts'],num_repeats,0)
+    final_qpos = np.repeat(dict_labels[train_obj_id]['final_qpos'],num_repeats,0).astype('float32')
+    final_obj_pos = np.repeat(dict_labels[train_obj_id]['final_obj_pos'],num_repeats,0).astype('float32')
+    final_pose = np.repeat(dict_labels[train_obj_id]['final_pose'],num_repeats,0).astype('float32')
+    final_ee = np.repeat(dict_labels[train_obj_id]['final_ee'],num_repeats,0).astype('float32')
+    final_ee_rel = np.repeat(dict_labels[train_obj_id]['final_ee_rel'],num_repeats,0).astype('float32')
+    final_contact_pos = np.repeat(dict_labels[train_obj_id]['final_contact_pos'],num_repeats,0).astype('float32')
+    final_contacts = np.repeat(dict_labels[train_obj_id]['final_contacts'],num_repeats,0).astype('float32')
 
-    obj_w_stacked = np.repeat(dict_labels[train_obj_id]['obj_w_stacked'],num_repeats,0)
-    obj_dim_stacked = np.repeat(dict_labels[train_obj_id]['obj_dim_stacked'],num_repeats,0)
+    obj_w_stacked = np.repeat(dict_labels[train_obj_id]['obj_w_stacked'],num_repeats,0).astype('float32')
+    obj_dim_stacked = np.repeat(dict_labels[train_obj_id]['obj_dim_stacked'],num_repeats,0).astype('float32')
     obj_type_stacked = np.repeat(dict_labels[train_obj_id]['obj_type_stacked'],num_repeats,0)
     obj_idx_stacked = np.repeat(dict_labels[train_obj_id]['obj_idx_stacked'],num_repeats,0)
-    obj_pose_reset = np.repeat(dict_labels[train_obj_id]['obj_pose_reset'],num_repeats,0)
-    qpos_reset = np.repeat(dict_labels[train_obj_id]['qpos_reset'],num_repeats,0)
+    obj_pose_reset = np.repeat(dict_labels[train_obj_id]['obj_pose_reset'],num_repeats,0).astype('float32')
+    qpos_reset = np.repeat(dict_labels[train_obj_id]['qpos_reset'],num_repeats,0).astype('float32')
 
 
 num_envs = final_qpos.shape[0]
@@ -184,14 +185,15 @@ else:
 ### Set up logging
 saver = ConfigurationSaver(log_dir = exp_path + "/raisimGymTorch/" + args.storedir + "/" + task_name,
                            save_items=[task_path + "/cfgs/" + args.cfg, task_path + "/Environment.hpp", task_path + "/runner.py"], test_dir=test_dir)
-tensorboard_launcher(saver.data_dir+"/..")  # press refresh (F5) after the first ppo update
+#tensorboard_launcher(saver.data_dir+"/..")  # press refresh (F5) after the first ppo update
 
 
 ### Set up RL algorithm
-actor = ppo_module.Actor(ppo_module.MLP(cfg['architecture']['policy_net'], output_activation, activations, ob_dim, act_dim, False),
-                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, 1.0),device)
+actor = ppo_module.Actor(ppo_module.MLP(cfg['architecture']['policy_net'], activations, ob_dim, act_dim),
+                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, num_envs, 1.0, NormalSampler(act_dim)),device)
 
-critic = ppo_module.Critic(ppo_module.MLP(cfg['architecture']['value_net'], output_activation, activations, ob_dim, 1, False),device)
+critic = ppo_module.Critic(ppo_module.MLP(cfg['architecture']['value_net'], activations, ob_dim, 1),device)
+
 
 ppo = PPO.PPO(actor=actor,
               critic=critic,
@@ -210,9 +212,10 @@ ppo = PPO.PPO(actor=actor,
 if mode == 'retrain' or args.evaluate:
     load_param(saver.data_dir.split('eval')[0]+weight_path, env, actor, critic, ppo.optimizer, saver.data_dir,args.cfg)
 
+
 ### Initialize the environment
 env.set_goals(final_obj_pos,final_ee,final_pose,final_contact_pos,final_contacts)
-env.reset_state(qpos_reset, np.zeros((num_envs,51),'float64'), obj_pose_reset)
+env.reset_state(qpos_reset, np.zeros((num_envs,51),'float32'), obj_pose_reset)
 
 avg_rewards = []
 for update in range(args.num_iterations):
@@ -242,18 +245,17 @@ for update in range(args.num_iterations):
     qpos_noisy_reset[:,3:] += random_noise_qpos[:,:]
 
     ### Run episode rollouts
-    env.reset_state(qpos_noisy_reset, np.zeros((num_envs,51),'float64'), obj_pose_reset)
+    env.reset_state(qpos_noisy_reset, np.zeros((num_envs,51),'float32'), obj_pose_reset)
     for step in range(n_steps):
-        obs = env.observe().astype('float64')
-
-        action = ppo.observe(obs)
-        reward, dones = env.step(action.astype('float64'))
+        obs = env.observe().astype('float32')
+        action = ppo.act(obs)
+        reward, dones = env.step(action.astype('float32'))
         reward.clip(min=reward_clip)
-
         ppo.step(value_obs=obs, rews=reward, dones=dones)
+
         done_sum = done_sum + np.sum(dones)
         reward_ll_sum = reward_ll_sum + np.sum(reward)
-    obs = env.observe().astype('float64')
+    obs = env.observe().astype('float32')
 
     ### Update policy
     ppo.update(actor_obs=obs, value_obs=obs, log_this_iteration=update % 10 == 0, update=update)

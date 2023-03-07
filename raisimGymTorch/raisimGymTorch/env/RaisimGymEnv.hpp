@@ -26,10 +26,10 @@ namespace raisim {
 using Dtype=float;
 using Dtype_double=double;
 using EigenRowMajorMat=Eigen::Matrix<Dtype, -1, -1, Eigen::RowMajor>;
-using EigenRowMajorMatDouble=Eigen::Matrix<double, -1, -1, Eigen::RowMajor>;
+//using EigenRowMajorMatDouble=Eigen::Matrix<double, -1, -1, Eigen::RowMajor>;
 using EigenRowMajorMatInt=Eigen::Matrix<int, -1, -1, Eigen::RowMajor>;
 using EigenVec=Eigen::Matrix<Dtype, -1, 1>;
-using EigenVecDouble=Eigen::Matrix<double, -1, 1>;
+//using EigenVec=Eigen::Matrix<double, -1, 1>;
 using EigenVecInt=Eigen::Matrix<int, -1, 1>;
 using EigenBoolVec=Eigen::Matrix<bool, -1, 1>;
 
@@ -44,16 +44,16 @@ class RaisimGymEnv {
   virtual void init() = 0;
   virtual void reset() = 0;
 
-  virtual void reset_state(const Eigen::Ref<EigenVecDouble>& init_state, const Eigen::Ref<EigenVecDouble>& init_vel,  const Eigen::Ref<EigenVecDouble>& obj_pose) = 0;
-  virtual void set_goals(const Eigen::Ref<EigenVecDouble>& obj_pos, const Eigen::Ref<EigenVecDouble>& ee_pos, const Eigen::Ref<EigenVecDouble>& pose, const Eigen::Ref<EigenVecDouble>& contact_pos, const Eigen::Ref<EigenVecDouble>& vertex_normals) = 0;
-  virtual void observe(Eigen::Ref<EigenVecDouble> ob) = 0;
+  virtual void reset_state(const Eigen::Ref<EigenVec>& init_state, const Eigen::Ref<EigenVec>& init_vel,  const Eigen::Ref<EigenVec>& obj_pose) = 0;
+  virtual void set_goals(const Eigen::Ref<EigenVec>& obj_pos, const Eigen::Ref<EigenVec>& ee_pos, const Eigen::Ref<EigenVec>& pose, const Eigen::Ref<EigenVec>& contact_pos, const Eigen::Ref<EigenVec>& vertex_normals) = 0;
+  virtual void observe(Eigen::Ref<EigenVec> ob) = 0;
   virtual void set_root_control() = 0;
-  virtual float step(const Eigen::Ref<EigenVecDouble>& action) = 0;
+  virtual float step(const Eigen::Ref<EigenVec>& action) = 0;
   virtual bool isTerminalState(float& terminalReward) = 0;
   ////////////////////////////////////////
 
   /////// optional methods ///////
-  virtual void load_object(const Eigen::Ref<EigenVecInt>& obj_idx, const Eigen::Ref<EigenVecDouble>& obj_weight, const Eigen::Ref<EigenVecDouble>& obj_dim, const Eigen::Ref<EigenVecInt>& obj_type){};
+  virtual void load_object(const Eigen::Ref<EigenVecInt>& obj_idx, const Eigen::Ref<EigenVec>& obj_weight, const Eigen::Ref<EigenVec>& obj_dim, const Eigen::Ref<EigenVecInt>& obj_type){};
   virtual void curriculumUpdate() {};
   virtual void close() { if(server_) server_->killServer(); };
   virtual void setSeed(int seed) {};

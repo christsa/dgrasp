@@ -13,15 +13,16 @@ class Actor:
         self.architecture.to(device)
         self.distribution.to(device)
         self.device = device
+        self.action_mean = None
 
     def sample(self, obs):
-        logits = self.architecture.architecture(obs)
-        actions, log_prob = self.distribution.sample(logits)
-        return actions.cpu().detach(), log_prob.cpu().detach()
+        self.action_mean = self.architecture.architecture(obs).cpu().numpy()
+        actions, log_prob = self.distribution.sample(self.action_mean)
+        return actions, log_prob
 
     def evaluate(self, obs, actions):
-        action_mean = self.architecture.architecture(obs)
-        return self.distribution.evaluate(obs, action_mean, actions)
+        self.action_mean = self.architecture.architecture(obs)
+        return self.distribution.evaluate(self.action_mean, actions)
 
     def parameters(self):
         return [*self.architecture.parameters(), *self.distribution.parameters()]
@@ -36,6 +37,9 @@ class Actor:
 
     def deterministic_parameters(self):
         return self.architecture.parameters()
+
+    def update(self):
+        self.distribution.update()
 
     @property
     def obs_shape(self):
@@ -67,7 +71,7 @@ class Critic:
 
 
 class MLP(nn.Module):
-    def __init__(self, shape, output_activation_fn, actionvation_fn, input_size, output_size, output_act=False):
+    def __init__(self, shape, actionvation_fn, input_size, output_size):
         super(MLP, self).__init__()
         self.activation_fn = actionvation_fn
 
@@ -80,9 +84,6 @@ class MLP(nn.Module):
             scale.append(np.sqrt(2))
 
         modules.append(nn.Linear(shape[-1], output_size))
-        if output_act:
-            modules.append(output_activation_fn())
-
         self.architecture = nn.Sequential(*modules)
         scale.append(np.sqrt(2))
 
@@ -97,21 +98,25 @@ class MLP(nn.Module):
 
 
 class MultivariateGaussianDiagonalCovariance(nn.Module):
-    def __init__(self, dim, init_std):
+    def __init__(self, dim, size, init_std, fast_sampler, seed=0):
         super(MultivariateGaussianDiagonalCovariance, self).__init__()
         self.dim = dim
         self.std = nn.Parameter(init_std * torch.ones(dim))
         self.distribution = None
+        self.fast_sampler = fast_sampler
+        self.fast_sampler.seed(seed)
+        self.samples = np.zeros([size, dim], dtype=np.float32)
+        self.logprob = np.zeros(size, dtype=np.float32)
+        self.std_np = self.std.detach().cpu().numpy()
+
+    def update(self):
+        self.std_np = self.std.detach().cpu().numpy()
 
     def sample(self, logits):
-        self.distribution = Normal(logits, self.std.reshape(self.dim))
+        self.fast_sampler.sample(logits, self.std_np, self.samples, self.logprob)
+        return self.samples.copy(), self.logprob.copy()
 
-        samples = self.distribution.sample()
-        log_prob = self.distribution.log_prob(samples).sum(dim=1)
-
-        return samples, log_prob
-
-    def evaluate(self, inputs, logits, outputs):
+    def evaluate(self, logits, outputs):
         distribution = Normal(logits, self.std.reshape(self.dim))
 
         actions_log_prob = distribution.log_prob(outputs).sum(dim=1)
@@ -124,5 +129,4 @@ class MultivariateGaussianDiagonalCovariance(nn.Module):
     def enforce_minimum_std(self, min_std):
         current_std = self.std.detach()
         new_std = torch.max(current_std, min_std.detach()).detach()
-        if not new_std.detach().isnan().any():
-            self.std.data = new_std
+        self.std.data = new_std

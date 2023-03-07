@@ -57,4 +57,10 @@ PYBIND11_MODULE(RAISIMGYM_TORCH_ENV_NAME, m) {
             return p;
         }
     ));
+
+  py::class_<NormalSampler>(m, "NormalSampler")
+    .def(py::init<int>(), py::arg("dim"))
+    .def("seed", &NormalSampler::seed)
+    .def("sample", &NormalSampler::sample);
 }
+

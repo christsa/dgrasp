@@ -133,16 +133,16 @@ namespace raisim {
                 server_->launchServer();
 
                 /// Create table
-                table_top = server_->addVisualBox("tabletop", 2.0, 0.05, 1.0, 0.44921875, 0.30859375, 0.1953125, 1, "");
+                table_top = server_->addVisualBox("tabletop", 2.0, 1.0, 0.05, 0.44921875, 0.30859375, 0.1953125, 1, "");
                 table_top->setPosition(1.25, 0, 0.475);
-                leg1 = server_->addVisualCylinder("leg1", 0.025, 0.2375, 0.0, 0.0, 0.0, 1, "");
-                leg2 = server_->addVisualCylinder("leg2", 0.025, 0.2375, 0.0, 0.0, 0.0, 1, "");
-                leg3 = server_->addVisualCylinder("leg3", 0.025, 0.2375, 0.0, 0.0, 0.0, 1, "");
-                leg4 = server_->addVisualCylinder("leg4", 0.025, 0.2375, 0.0, 0.0, 0.0, 1, "");
-                leg1->setPosition(0.2625,0.4875,0.2375);
-                leg2->setPosition(2.2475,0.4875,0.2375);
-                leg3->setPosition(0.2625,-0.4875,0.2375);
-                leg4->setPosition(2.2475,-0.4875,0.2375);
+                leg1 = server_->addVisualCylinder("leg1", 0.025, 0.475, 0.0, 0.0, 0.0, 1, "");
+                leg2 = server_->addVisualCylinder("leg2", 0.025, 0.475, 0.0, 0.0, 0.0, 1, "");
+                leg3 = server_->addVisualCylinder("leg3", 0.025, 0.475, 0.0, 0.0, 0.0, 1, "");
+                leg4 = server_->addVisualCylinder("leg4", 0.025, 0.475, 0.0, 0.0, 0.0, 1, "");
+                leg1->setPosition(0.2625,0.4675,0.2375);
+                leg2->setPosition(2.2275,0.4875,0.2375);
+                leg3->setPosition(0.2625,-0.4675,0.2375);
+                leg4->setPosition(2.2275,-0.4875,0.2375);
 
                 /// initialize spheres for target 3D positions
                 for(int i=0; i<num_bodyparts ; i++){
@@ -156,7 +156,7 @@ namespace raisim {
         void init() final { }
 
         /// This function loads the object into the environment
-        void load_object(const Eigen::Ref<EigenVecInt>& obj_idx, const Eigen::Ref<EigenVecDouble>& obj_weight, const Eigen::Ref<EigenVecDouble>& obj_dim, const Eigen::Ref<EigenVecInt>& obj_type) final {
+        void load_object(const Eigen::Ref<EigenVecInt>& obj_idx, const Eigen::Ref<EigenVec>& obj_weight, const Eigen::Ref<EigenVec>& obj_dim, const Eigen::Ref<EigenVecInt>& obj_type) final {
 
             /// Set standard properties
             raisim::Mat<3, 3> inertia;
@@ -266,7 +266,7 @@ namespace raisim {
         }
 
         /// Resets the state to a user defined input
-        void reset_state(const Eigen::Ref<EigenVecDouble>& init_state, const Eigen::Ref<EigenVecDouble>& init_vel, const Eigen::Ref<EigenVecDouble>& obj_pose) final {
+        void reset_state(const Eigen::Ref<EigenVec>& init_state, const Eigen::Ref<EigenVec>& init_vel, const Eigen::Ref<EigenVec>& obj_pose) final {
 
             /// reset gains (only required in case for inference)
             Eigen::VectorXd jointPgain(gvDim_), jointDgain(gvDim_);
@@ -287,8 +287,8 @@ namespace raisim {
 
             /// set initial hand pose (45 DoF) and velocity (45 DoF)
             gc_set_.head(6).setZero();
-            gc_set_.tail(nJoints_-3) = init_state.tail(nJoints_-3); //.cast<double>();
-            gv_set_ = init_vel; //.cast<double>();
+            gc_set_.tail(nJoints_-3) = init_state.tail(nJoints_-3).cast<double>(); //.cast<double>();
+            gv_set_ = init_vel.cast<double>();
             mano_->setState(gc_set_, gv_set_);
 
             /// set initial root position in global frame as origin in new coordinate frame
@@ -303,7 +303,7 @@ namespace raisim {
             mano_->setBaseOrientation(init_rot_);
 
             /// set initial object pose
-            obj_pos_init_  = obj_pose;
+            obj_pos_init_  = obj_pose.cast<double>();
 
             if (cylinder_mesh)
             {
@@ -352,14 +352,14 @@ namespace raisim {
         /// goal_pose: Hand goal pose (48DoF), 3DoF global euler rotation + 45DoF local joint angles
         /// contact_pos: Deprecated (63 DoF)
         /// goal_contacts: Hand parts that should be in contact (16 hand parts)
-        void set_goals(const Eigen::Ref<EigenVecDouble>& obj_goal_pos, const Eigen::Ref<EigenVecDouble>& ee_goal_pos, const Eigen::Ref<EigenVecDouble>& goal_pose, const Eigen::Ref<EigenVecDouble>& contact_pos, const Eigen::Ref<EigenVecDouble>& goal_contacts) final {
+        void set_goals(const Eigen::Ref<EigenVec>& obj_goal_pos, const Eigen::Ref<EigenVec>& ee_goal_pos, const Eigen::Ref<EigenVec>& goal_pose, const Eigen::Ref<EigenVec>& contact_pos, const Eigen::Ref<EigenVec>& goal_contacts) final {
 
             raisim::Vec<4> quat_goal_hand_w, quat_goal_hand_r, quat_obj_init;
             raisim::Vec<3> euler_goal_pose;
             raisim::Mat<3,3> rotm_goal_hand_r;
 
             /// set final object pose
-            final_obj_pos_ = obj_goal_pos; //.cast<double>();
+            final_obj_pos_ = obj_goal_pos.cast<double>(); //.cast<double>();
 
             /// convert object and handpose pose to rotation matrix format
             raisim::quatToRotMat(obj_goal_pos.tail(4), Obj_orientation_temp);
@@ -374,7 +374,7 @@ namespace raisim {
             raisim::quatToRotMat(quat_goal_hand_r,rotm_goal_hand_r);
             raisim::RotmatToEuler(rotm_goal_hand_r,euler_goal_pose);
 
-            final_pose_ = goal_pose;
+            final_pose_ = goal_pose.cast<double>();
             final_pose_.head(3) = euler_goal_pose.e();
 
             /// Compute and convert hand 3D joint positions into object relative frame
@@ -392,7 +392,7 @@ namespace raisim {
 
             /// Intialize and set goal contact array
             num_active_contacts_ = double(goal_contacts.sum());
-            final_contact_array_ = goal_contacts;
+            final_contact_array_ = goal_contacts.cast<double>();
 
             for(int i=0; i<num_contacts ; i++){
                 contact_body_idx_[i] =  mano_->getBodyIdx(contact_bodies_[i]);
@@ -405,7 +405,7 @@ namespace raisim {
         }
 
         /// This function takes an environment step given an action (51DoF) input
-        float step(const Eigen::Ref<EigenVecDouble>& action) final {
+        float step(const Eigen::Ref<EigenVec>& action) final {
 
             raisim::Vec<4> obj_orientation_quat, quat_final_pose, quat_world;
             raisim::Mat<3, 3> rot, rot_trans, rot_world, rot_goal, rotmat_final_obj_pos, rotmat_final_obj_pos_trans;
@@ -493,7 +493,7 @@ namespace raisim {
             }
 
             /// Compute position target for actuators
-            pTarget_ = action;
+            pTarget_ = action.cast<double>();
             pTarget_ = pTarget_.cwiseProduct(actionStd_); //residual action * scaling
             pTarget_ += actionMean_; //add wrist bias (first 3DOF) and last pose (48DoF)
 
@@ -748,8 +748,8 @@ namespace raisim {
         }
 
         /// Set observation in wrapper to current observation
-        void observe(Eigen::Ref<EigenVecDouble> ob) final {
-            ob = obDouble_;
+        void observe(Eigen::Ref<EigenVec> ob) final {
+            ob = obDouble_.cast<float>();
         }
 
         /// This function is only relevant for testing

@@ -2,6 +2,7 @@ from ruamel.yaml import YAML, dump, RoundTripDumper
 from raisimGymTorch.env.bin import dgrasp as mano
 from raisimGymTorch.env.RaisimGymVecEnv import RaisimGymVecEnv as VecEnv
 from raisimGymTorch.helper.raisim_gym_helper import ConfigurationSaver, load_param, tensorboard_launcher
+from raisimGymTorch.env.bin.dgrasp import NormalSampler
 import os
 import os.path
 import time
@@ -72,7 +73,7 @@ print(f"Experiment name: \"{args.exp_name}\"")
 task_name = args.exp_name
 ### check if gpu is available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.double)
+#torch.set_default_dtype(torch.double)
 ### directories
 task_path = os.path.dirname(os.path.realpath(__file__))
 home_path = task_path + "/../../../../.."
@@ -129,36 +130,36 @@ if all_obj_train:
         obj_pose_reset_list.append(dict_labels[obj_key]['obj_pose_reset'])
         qpos_reset_list.append(dict_labels[obj_key]['qpos_reset'])
 
-    final_qpos = np.vstack(final_qpos_list)
-    final_obj_pos = np.vstack(final_obj_pos_list)
-    final_pose = np.vstack(final_pose_list)
-    final_ee = np.vstack(final_ee_list)
-    final_ee_rel =  np.vstack(final_ee_rel_list)
-    final_contact_pos = np.vstack(final_contact_pos_list)
-    final_contacts = np.vstack(final_contacts_list)
+    final_qpos = np.vstack(final_qpos_list).astype('float32')
+    final_obj_pos = np.vstack(final_obj_pos_list).astype('float32')
+    final_pose = np.vstack(final_pose_list).astype('float32')
+    final_ee = np.vstack(final_ee_list).astype('float32')
+    final_ee_rel =  np.vstack(final_ee_rel_list).astype('float32')
+    final_contact_pos = np.vstack(final_contact_pos_list).astype('float32')
+    final_contacts = np.vstack(final_contacts_list).astype('float32')
 
-    obj_w_stacked = np.hstack(obj_w_list)
-    obj_dim_stacked = np.vstack(obj_dim_list)
+    obj_w_stacked = np.hstack(obj_w_list).astype('float32')
+    obj_dim_stacked = np.vstack(obj_dim_list).astype('float32')
     obj_type_stacked = np.hstack(obj_type_list)
     obj_idx_stacked = np.hstack(obj_idx_list_list)
-    obj_pose_reset = np.vstack(obj_pose_reset_list)
-    qpos_reset = np.vstack(qpos_reset_list)
+    obj_pose_reset = np.vstack(obj_pose_reset_list).astype('float32')
+    qpos_reset = np.vstack(qpos_reset_list).astype('float32')
 ### Load labels for single object
 else:
-    final_qpos = np.array(dict_labels[train_obj_id]['final_qpos'])
-    final_obj_pos = np.array(dict_labels[train_obj_id]['final_obj_pos'])
-    final_pose = np.array(dict_labels[train_obj_id]['final_pose'])
-    final_ee = np.array(dict_labels[train_obj_id]['final_ee'])
-    final_ee_rel = np.array(dict_labels[train_obj_id]['final_ee_rel'])
-    final_contact_pos = np.array(dict_labels[train_obj_id]['final_contact_pos'])
-    final_contacts = np.array(dict_labels[train_obj_id]['final_contacts'])
+    final_qpos = np.array(dict_labels[train_obj_id]['final_qpos']).astype('float32')
+    final_obj_pos = np.array(dict_labels[train_obj_id]['final_obj_pos']).astype('float32')
+    final_pose = np.array(dict_labels[train_obj_id]['final_pose']).astype('float32')
+    final_ee = np.array(dict_labels[train_obj_id]['final_ee']).astype('float32')
+    final_ee_rel = np.array(dict_labels[train_obj_id]['final_ee_rel']).astype('float32')
+    final_contact_pos = np.array(dict_labels[train_obj_id]['final_contact_pos']).astype('float32')
+    final_contacts = np.array(dict_labels[train_obj_id]['final_contacts']).astype('float32')
 
-    obj_w_stacked = np.array(dict_labels[train_obj_id]['obj_w_stacked'])
-    obj_dim_stacked = np.array(dict_labels[train_obj_id]['obj_dim_stacked'])
+    obj_w_stacked = np.array(dict_labels[train_obj_id]['obj_w_stacked']).astype('float32')
+    obj_dim_stacked = np.array(dict_labels[train_obj_id]['obj_dim_stacked']).astype('float32')
     obj_type_stacked = np.array(dict_labels[train_obj_id]['obj_type_stacked'])
     obj_idx_stacked = np.array(dict_labels[train_obj_id]['obj_idx_stacked'])
-    obj_pose_reset = np.array(dict_labels[train_obj_id]['obj_pose_reset'])
-    qpos_reset = np.array(dict_labels[train_obj_id]['qpos_reset'])
+    obj_pose_reset = np.array(dict_labels[train_obj_id]['obj_pose_reset']).astype('float32')
+    qpos_reset = np.array(dict_labels[train_obj_id]['qpos_reset']).astype('float32')
 
 
 num_envs = 1 
@@ -188,10 +189,10 @@ saver = ConfigurationSaver(log_dir = exp_path + "/raisimGymTorch/" + args.stored
                            save_items=[task_path + "/cfgs/" + args.cfg, task_path + "/Environment.hpp", task_path + "/runner.py"], test_dir=True)
 
 ### Set up RL algorithm
-actor = ppo_module.Actor(ppo_module.MLP(cfg['architecture']['policy_net'], output_activation, activations, ob_dim, act_dim, False),
-                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, 1.0),device)
+actor = ppo_module.Actor(ppo_module.MLP(cfg['architecture']['policy_net'], activations, ob_dim, act_dim),
+                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, num_envs, 1.0, NormalSampler(act_dim)),device)
 
-critic = ppo_module.Critic(ppo_module.MLP(cfg['architecture']['value_net'], output_activation, activations, ob_dim, 1, False),device)
+critic = ppo_module.Critic(ppo_module.MLP(cfg['architecture']['value_net'], activations, ob_dim, 1),device)
 
 ppo = PPO.PPO(actor=actor,
               critic=critic,
@@ -223,7 +224,7 @@ obj_target_ang_noise = eval_dict['ang_noise']
 
 ### Initialize the environment
 env.set_goals(final_obj_pos,final_ee,final_pose,final_contact_pos,final_contacts)
-env.reset_state(qpos_reset, np.zeros((num_envs,51),'float64'), obj_pose_reset)
+env.reset_state(qpos_reset, np.zeros((num_envs,51),'float32'), obj_pose_reset)
 
 ### Evaluate trained model visually (note always the first environment gets visualized)
 
@@ -290,8 +291,8 @@ while True:
 
     last_idx = i
 
-    env.set_goals(final_obj_pos_random,final_ee_random_or.reshape(num_envs,-1),final_pose_perturbed,final_contact_pos_seq,final_contacts_seq)
-    env.reset_state(qpos_reset_seq, np.zeros((num_envs,51),'float64'), obj_pose_reset_seq)
+    env.set_goals(final_obj_pos_random,final_ee_random_or.reshape(num_envs,-1).astype('float32'),final_pose_perturbed,final_contact_pos_seq,final_contacts_seq)
+    env.reset_state(qpos_reset_seq, np.zeros((num_envs,51),'float32'), obj_pose_reset_seq)
 
     time.sleep(2)
 
@@ -309,7 +310,7 @@ while True:
         obs = env.observe(False)
 
         ### Get action from policy
-        action_pred = actor.architecture.architecture(torch.from_numpy(obs.astype('float64')).to(device))
+        action_pred = actor.architecture.architecture(torch.from_numpy(obs.astype('float32')).to(device))
         frame_start = time.time()
 
         action_ll = action_pred.cpu().detach().numpy()
@@ -321,7 +322,7 @@ while True:
                 set_guide=True
 
 
-        reward_ll, dones = env.step(action_ll.astype('float64'))
+        reward_ll, dones = env.step(action_ll.astype('float32'))
 
         ### early exit if object not picked up successfully
         if np.linalg.norm(obs[0,213:216]) > 0.4 or dones[0]:

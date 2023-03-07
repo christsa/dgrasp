@@ -7,7 +7,7 @@ environment:
   num_repeats: 1
   eval_every_n: 200
   update_every_n: 200
-  num_threads: 60
+  num_threads: 6
   simulation_dt: 0.00222
   control_dt: 0.03
   max_time: 4.0

@@ -1,6 +1,7 @@
 from ruamel.yaml import YAML, dump, RoundTripDumper
 from raisimGymTorch.env.bin import dgrasp_test as mano
 from raisimGymTorch.env.RaisimGymVecEnv import RaisimGymVecEnv as VecEnv
+from raisimGymTorch.env.bin.dgrasp_test import NormalSampler
 from raisimGymTorch.helper.raisim_gym_helper import ConfigurationSaver, load_param, tensorboard_launcher
 import os
 import time
@@ -68,7 +69,7 @@ print(f"Experiment name: \"{args.exp_name}\"")
 task_name = args.exp_name
 ### check if gpu is available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.double)
+
 ### directories
 task_path = os.path.dirname(os.path.realpath(__file__))
 home_path = task_path + "/../../../../.."
@@ -126,37 +127,37 @@ if all_obj_train:
         obj_pose_reset_list.append(dict_labels[obj_key]['obj_pose_reset'])
         qpos_reset_list.append(dict_labels[obj_key]['qpos_reset'])
 
-    final_qpos = np.repeat(np.vstack(final_qpos_list),num_repeats,0)
-    final_obj_pos = np.repeat(np.vstack(final_obj_pos_list),num_repeats,0)
-    final_pose = np.repeat(np.vstack(final_pose_list),num_repeats,0)
-    final_ee = np.repeat(np.vstack(final_ee_list),num_repeats,0)
-    final_ee_rel =  np.repeat(np.vstack(final_ee_rel_list),num_repeats,0)
-    final_contact_pos = np.repeat(np.vstack(final_contact_pos_list),num_repeats,0)
-    final_contacts = np.repeat(np.vstack(final_contacts_list),num_repeats,0)
+    final_qpos = np.repeat(np.vstack(final_qpos_list),num_repeats,0).astype('float32')
+    final_obj_pos = np.repeat(np.vstack(final_obj_pos_list),num_repeats,0).astype('float32')
+    final_pose = np.repeat(np.vstack(final_pose_list),num_repeats,0).astype('float32')
+    final_ee = np.repeat(np.vstack(final_ee_list),num_repeats,0).astype('float32')
+    final_ee_rel =  np.repeat(np.vstack(final_ee_rel_list),num_repeats,0).astype('float32')
+    final_contact_pos = np.repeat(np.vstack(final_contact_pos_list),num_repeats,0).astype('float32')
+    final_contacts = np.repeat(np.vstack(final_contacts_list),num_repeats,0).astype('float32')
 
-    obj_w_stacked = np.repeat(np.hstack(obj_w_list),num_repeats,0)
-    obj_dim_stacked = np.repeat(np.vstack(obj_dim_list),num_repeats,0)
+    obj_w_stacked = np.repeat(np.hstack(obj_w_list),num_repeats,0).astype('float32')
+    obj_dim_stacked = np.repeat(np.vstack(obj_dim_list),num_repeats,0).astype('float32')
     obj_type_stacked = np.repeat(np.hstack(obj_type_list),num_repeats,0)
     obj_idx_stacked = np.repeat(np.hstack(obj_idx_list_list),num_repeats,0)
-    obj_pose_reset = np.repeat(np.vstack(obj_pose_reset_list),num_repeats,0)
-    qpos_reset = np.repeat(np.vstack(qpos_reset_list),num_repeats,0)
+    obj_pose_reset = np.repeat(np.vstack(obj_pose_reset_list),num_repeats,0).astype('float32')
+    qpos_reset = np.repeat(np.vstack(qpos_reset_list),num_repeats,0).astype('float32')
 
 ### Load labels for single object
 else:
-    final_qpos = np.repeat(dict_labels[train_obj_id]['final_qpos'],num_repeats,0)
-    final_obj_pos = np.repeat(dict_labels[train_obj_id]['final_obj_pos'],num_repeats,0)
-    final_pose = np.repeat(dict_labels[train_obj_id]['final_pose'],num_repeats,0)
-    final_ee = np.repeat(dict_labels[train_obj_id]['final_ee'],num_repeats,0)
-    final_ee_rel = np.repeat(dict_labels[train_obj_id]['final_ee_rel'],num_repeats,0)
-    final_contact_pos = np.repeat(dict_labels[train_obj_id]['final_contact_pos'],num_repeats,0)
-    final_contacts = np.repeat(dict_labels[train_obj_id]['final_contacts'],num_repeats,0)
+    final_qpos = np.repeat(dict_labels[train_obj_id]['final_qpos'],num_repeats,0).astype('float32')
+    final_obj_pos = np.repeat(dict_labels[train_obj_id]['final_obj_pos'],num_repeats,0).astype('float32')
+    final_pose = np.repeat(dict_labels[train_obj_id]['final_pose'],num_repeats,0).astype('float32')
+    final_ee = np.repeat(dict_labels[train_obj_id]['final_ee'],num_repeats,0).astype('float32')
+    final_ee_rel = np.repeat(dict_labels[train_obj_id]['final_ee_rel'],num_repeats,0).astype('float32')
+    final_contact_pos = np.repeat(dict_labels[train_obj_id]['final_contact_pos'],num_repeats,0).astype('float32')
+    final_contacts = np.repeat(dict_labels[train_obj_id]['final_contacts'],num_repeats,0).astype('float32')
 
-    obj_w_stacked = np.repeat(dict_labels[train_obj_id]['obj_w_stacked'],num_repeats,0)
-    obj_dim_stacked = np.repeat(dict_labels[train_obj_id]['obj_dim_stacked'],num_repeats,0)
+    obj_w_stacked = np.repeat(dict_labels[train_obj_id]['obj_w_stacked'],num_repeats,0).astype('float32')
+    obj_dim_stacked = np.repeat(dict_labels[train_obj_id]['obj_dim_stacked'],num_repeats,0).astype('float32')
     obj_type_stacked = np.repeat(dict_labels[train_obj_id]['obj_type_stacked'],num_repeats,0)
     obj_idx_stacked = np.repeat(dict_labels[train_obj_id]['obj_idx_stacked'],num_repeats,0)
-    obj_pose_reset = np.repeat(dict_labels[train_obj_id]['obj_pose_reset'],num_repeats,0)
-    qpos_reset = np.repeat(dict_labels[train_obj_id]['qpos_reset'],num_repeats,0)
+    obj_pose_reset = np.repeat(dict_labels[train_obj_id]['obj_pose_reset'],num_repeats,0).astype('float32')
+    qpos_reset = np.repeat(dict_labels[train_obj_id]['qpos_reset'],num_repeats,0).astype('float32')
 
 
 num_envs = 1 if args.vis_evaluate else final_qpos.shape[0]
@@ -186,10 +187,10 @@ saver = ConfigurationSaver(log_dir = log_dir,
                            save_items=[task_path + "/cfgs/" + args.cfg, task_path + "/Environment.hpp", task_path + "/runner.py"], test_dir=True)
 
 ### Set up RL algorithm
-actor = ppo_module.Actor(ppo_module.MLP(cfg['architecture']['policy_net'], output_activation, activations, ob_dim-meta_info_dim, act_dim, False),
-                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, 1.0),device)
+actor = ppo_module.Actor(ppo_module.MLP(cfg['architecture']['policy_net'], activations, ob_dim-meta_info_dim, act_dim),
+                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, num_envs, 1.0,  NormalSampler(act_dim)),device)
 
-critic = ppo_module.Critic(ppo_module.MLP(cfg['architecture']['value_net'], output_activation, activations, ob_dim-meta_info_dim, 1, False),device)
+critic = ppo_module.Critic(ppo_module.MLP(cfg['architecture']['value_net'], activations, ob_dim-meta_info_dim, 1),device)
 
 ppo = PPO.PPO(actor=actor,
               critic=critic,
@@ -209,7 +210,7 @@ load_param(saver.data_dir.split('eval')[0]+weight_path, env, actor, critic, ppo.
 
 ### Initialize the environment
 env.set_goals(final_obj_pos,final_ee,final_pose,final_contact_pos,final_contacts)
-env.reset_state(qpos_reset, np.zeros((num_envs,51),'float64'), obj_pose_reset)
+env.reset_state(qpos_reset, np.zeros((num_envs,51),'float32'), obj_pose_reset)
 
 
 ### Evaluate trained model visually (note always the first environment gets visualized)
@@ -252,7 +253,7 @@ if args.vis_evaluate:
             env.load_object(obj_idx_stacked,obj_w_stacked, obj_dim_stacked, obj_type_stacked)
 
         env.set_goals(final_obj_pos_seq,final_ee_seq,final_pose_seq,final_contact_pos_seq,final_contacts_seq)
-        env.reset_state(qpos_reset_seq, np.zeros((num_envs,51),'float64'), obj_pose_reset_seq)
+        env.reset_state(qpos_reset_seq, np.zeros((num_envs,51)), obj_pose_reset_seq)
 
         set_guide=False
         obj_pose_pos_list = []
@@ -264,7 +265,7 @@ if args.vis_evaluate:
             obs = env.observe(False)
 
             ### Get action from policy
-            action_pred = actor.architecture.architecture(torch.from_numpy(obs[:,:-meta_info_dim].astype('float64')).to(device))
+            action_pred = actor.architecture.architecture(torch.from_numpy(obs[:,:-meta_info_dim]).to(device))
             frame_start = time.time()
 
             action_ll = action_pred.cpu().detach().numpy()
@@ -275,7 +276,7 @@ if args.vis_evaluate:
                     env.set_root_control()
                     set_guide=True
 
-            reward_ll, dones = env.step(action_ll.astype('float64'))
+            reward_ll, dones = env.step(action_ll)
 
             frame_end = time.time()
             wait_time = cfg['environment']['control_dt'] - (frame_end-frame_start)
@@ -298,7 +299,7 @@ else:
     for step in range(n_steps):
         obs = env.observe(False)
 
-        action_ll = actor.architecture.architecture(torch.from_numpy(obs[:,:-4].astype('float64')).to(device))
+        action_ll = actor.architecture.architecture(torch.from_numpy(obs[:,:-4]).to(device))
         frame_start = time.time()
 
         ### After grasp is established remove surface and test stability
@@ -314,7 +315,7 @@ else:
             disp_list.append(obj_disp)
             obj_pos_fixed = obs[:,-4:-1].copy()
 
-        reward_ll, dones = env.step(action_ll.cpu().detach().numpy().astype('float64'))
+        reward_ll, dones = env.step(action_ll.cpu().detach().numpy())
 
         frame_end = time.time()
         wait_time = cfg['environment']['control_dt'] - (frame_end-frame_start)

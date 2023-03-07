@@ -12,6 +12,9 @@
 
 namespace raisim {
 
+int THREAD_COUNT;
+
+
 template<class ChildEnvironment>
 class VectorizedEnvironment {
 
@@ -35,7 +38,9 @@ class VectorizedEnvironment {
   const std::string& getCfgString() const { return cfgString_; }
 
   void init() {
-    omp_set_num_threads(cfg_["num_threads"].template As<int>());
+    THREAD_COUNT = cfg_["num_threads"].template As<int>();
+    omp_set_num_threads(THREAD_COUNT);
+
     num_envs_ = cfg_["num_envs"].template As<int>();
 
     environments_.reserve(num_envs_);
@@ -65,31 +70,31 @@ class VectorizedEnvironment {
       env->reset();
   }
 
-    void load_object(Eigen::Ref<EigenRowMajorMatInt> &obj_idx, Eigen::Ref<EigenRowMajorMatDouble> &obj_weight, Eigen::Ref<EigenRowMajorMatDouble>& obj_dim, Eigen::Ref<EigenRowMajorMatInt>& obj_type) {
+    void load_object(Eigen::Ref<EigenRowMajorMatInt> &obj_idx, Eigen::Ref<EigenRowMajorMat> &obj_weight, Eigen::Ref<EigenRowMajorMat>& obj_dim, Eigen::Ref<EigenRowMajorMatInt>& obj_type) {
 #pragma omp parallel for
         for (int i = 0; i < num_envs_; i++)
             environments_[i]->load_object(obj_idx.row(i), obj_weight.row(i), obj_dim.row(i), obj_type.row(i));
     }
 
-  void reset_state(Eigen::Ref<EigenRowMajorMatDouble> &init_state, Eigen::Ref<EigenRowMajorMatDouble> &init_vel, Eigen::Ref<EigenRowMajorMatDouble> &obj_pose) {
+  void reset_state(Eigen::Ref<EigenRowMajorMat> &init_state, Eigen::Ref<EigenRowMajorMat> &init_vel, Eigen::Ref<EigenRowMajorMat> &obj_pose) {
 #pragma omp parallel for
       for (int i = 0; i < num_envs_; i++)
           environments_[i]->reset_state(init_state.row(i), init_vel.row(i), obj_pose.row(i));
   }
 
-    void set_goals(Eigen::Ref<EigenRowMajorMatDouble> &obj_pos, Eigen::Ref<EigenRowMajorMatDouble> &ee_pos, Eigen::Ref<EigenRowMajorMatDouble> &pose, Eigen::Ref<EigenRowMajorMatDouble> &contact_pos, Eigen::Ref<EigenRowMajorMatDouble> &vertex_normals) {
+    void set_goals(Eigen::Ref<EigenRowMajorMat> &obj_pos, Eigen::Ref<EigenRowMajorMat> &ee_pos, Eigen::Ref<EigenRowMajorMat> &pose, Eigen::Ref<EigenRowMajorMat> &contact_pos, Eigen::Ref<EigenRowMajorMat> &vertex_normals) {
 #pragma omp parallel for
         for (int i = 0; i < num_envs_; i++)
             environments_[i]->set_goals(obj_pos.row(i), ee_pos.row(i), pose.row(i), contact_pos.row(i), vertex_normals.row(i));
     }
 
-  void observe(Eigen::Ref<EigenRowMajorMatDouble> &ob) {
+  void observe(Eigen::Ref<EigenRowMajorMat> &ob) {
 #pragma omp parallel for
     for (int i = 0; i < num_envs_; i++)
       environments_[i]->observe(ob.row(i));
   }
 
-  void step(Eigen::Ref<EigenRowMajorMatDouble> &action,
+  void step(Eigen::Ref<EigenRowMajorMat> &action,
             Eigen::Ref<EigenVec> &reward,
             Eigen::Ref<EigenBoolVec> &done) {
 #pragma omp parallel for
@@ -152,7 +157,7 @@ class VectorizedEnvironment {
  private:
 
   inline void perAgentStep(int agentId,
-                           Eigen::Ref<EigenRowMajorMatDouble> &action,
+                           Eigen::Ref<EigenRowMajorMat> &action,
                            Eigen::Ref<EigenVec> &reward,
                            Eigen::Ref<EigenBoolVec> &done) {
 //    std::cout << "action i" << agentId << " " << action.row(agentId)[0] << " " <<  action.row(agentId)[1] << " " << action.row(agentId)[2] << std::endl;
@@ -178,6 +183,56 @@ class VectorizedEnvironment {
   std::string resourceDir_;
   Yaml::Node cfg_;
   std::string cfgString_;
+};
+
+class NormalDistribution {
+ public:
+  NormalDistribution() : normDist_(0.f, 1.f) {}
+
+  float sample() { return normDist_(gen_); }
+  void seed(int i) { gen_.seed(i); }
+
+ private:
+  std::normal_distribution<float> normDist_;
+  static thread_local std::mt19937 gen_;
+};
+thread_local std::mt19937 raisim::NormalDistribution::gen_;
+
+
+class NormalSampler {
+ public:
+  NormalSampler(int dim) {
+    dim_ = dim;
+    normal_.resize(THREAD_COUNT);
+    seed(0);
+  }
+
+  void seed(int seed) {
+    // this ensures that every thread gets a different seed
+#pragma omp parallel for schedule(static, 1)
+    for (int i = 0; i < THREAD_COUNT; i++)
+      normal_[0].seed(i + seed);
+  }
+
+  inline void sample(Eigen::Ref<EigenRowMajorMat> &mean,
+                     Eigen::Ref<EigenVec> &std,
+                     Eigen::Ref<EigenRowMajorMat> &samples,
+                     Eigen::Ref<EigenVec> &log_prob) {
+    int agentNumber = log_prob.rows();
+
+#pragma omp parallel for schedule(auto)
+    for (int agentId = 0; agentId < agentNumber; agentId++) {
+      log_prob(agentId) = 0;
+      for (int i = 0; i < dim_; i++) {
+        const float noise = normal_[omp_get_thread_num()].sample();
+        samples(agentId, i) = mean(agentId, i) + noise * std(i);
+        log_prob(agentId) -= noise * noise * 0.5 + std::log(std(i));
+      }
+      log_prob(agentId) -= float(dim_) * 0.9189385332f;
+    }
+  }
+  int dim_;
+  std::vector<NormalDistribution> normal_;
 };
 
 }
