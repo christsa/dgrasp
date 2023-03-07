@@ -3,6 +3,7 @@ import numpy as np
 import raisimpy as raisim
 import time
 
+
 raisim.World.setLicenseFile(os.path.dirname(os.path.abspath(__file__)) + "/../../rsc/activation.raisim")
 anymal_urdf_file = os.path.dirname(os.path.abspath(__file__)) + "/../../rsc/anymal/urdf/anymal.urdf"
 laikago_urdf_file = os.path.dirname(os.path.abspath(__file__)) + "/../../rsc/laikago/laikago.urdf"
@@ -47,14 +48,19 @@ for i in range(5):
 
         if object_type == 0:
             obj = world.addMesh(monkey_file, 5.0, dummy_inertia, np.array([0, 0, 0]), 0.3)
+            obj.setAppearance("blue")
         elif object_type == 1:
             obj = world.addCylinder(0.2, 0.3, 2.0)
+            obj.setAppearance("red")
         elif object_type == 2:
             obj = world.addCapsule(0.2, 0.3, 2.0)
+            obj.setAppearance("green")
         elif object_type == 3:
             obj = world.addBox(0.4, 0.4, 0.4, 2.0)
+            obj.setAppearance("purple")
         else:
             obj = world.addSphere(0.3, 2.0)
+            obj.setAppearance("orange")
 
         obj.setPosition(i-2.5, j-2.5, 5)
 
@@ -71,7 +77,6 @@ jaco_foot_lh_linear = anymal.getDenseFrameJacobian("LF_ADAPTER_TO_FOOT")
 jaco_foot_lh_angular = anymal.getDenseFrameRotationalJacobian("LF_ADAPTER_TO_FOOT")
 
 for i in range(500000):
-    time.sleep(0.001)
-    world.integrate()
+    server.integrateWorldThreadSafe()
 
 server.killServer()

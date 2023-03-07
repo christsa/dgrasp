@@ -3,17 +3,9 @@
 
 #include "raisim/RaisimServer.hpp"
 #include "raisim/World.hpp"
-#if WIN32
-#include <timeapi.h>
-#endif
 
 int main(int argc, char* argv[]) {
-  /// create raisim world
   auto binaryPath = raisim::Path::setFromArgv(argv[0]);
-  raisim::World::setActivationKey(binaryPath.getDirectory() + "\\rsc\\activation.raisim");
-#if WIN32
-    timeBeginPeriod(1); // for sleep_for function. windows default clock speed is 1/64 second. This sets it to 1ms.
-#endif
 
   raisim::World world;
   world.setTimeStep(0.002);
@@ -31,10 +23,13 @@ int main(int argc, char* argv[]) {
   terrainProperties.fractalGain = 0.25;
 
   auto hm = world.addHeightMap(0.0, 0.0, terrainProperties);
+  hm->setAppearance("soil1");
   auto cube = world.addBox(1,1,1,1);
   cube->setPosition(3,0,3);
+  cube->setAppearance("blue");
   auto cylinder = world.addCylinder(1, 1, 1);
   cylinder->setPosition(3,3,3);
+  cylinder->setAppearance("yellow");
   auto capsule = world.addCapsule(1, 1, 1);
   capsule->setPosition(-3,3,3);
   auto sphere = world.addSphere(1, 1);
@@ -52,7 +47,7 @@ int main(int argc, char* argv[]) {
   auto visSphere = server.addVisualSphere("viz_sphere", 0.3, 1,0,0,1);
 
   while (1) {
-    raisim::MSLEEP(2);
+    RS_TIMED_LOOP(int(world.getTimeStep()*1e6))
     server.integrateWorldThreadSafe();
     double angle = counter/1000.;
     double magnitude = (counter%3000)*0.1;

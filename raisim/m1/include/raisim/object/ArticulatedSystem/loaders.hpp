@@ -54,7 +54,7 @@ struct UrdfBody {
   Vec<3> origin;
   Mat<3, 3> rot;
   Vec<3> scale;
-  std::vector<double> param;
+  Vec<4> param;
   raisim::Vec<4> color;
   std::string mat;
   std::string collision_mat;
@@ -86,7 +86,7 @@ struct UrdfJoint {
     rot.setIdentity();
     springMountPos.setZero();
   }
-  std::string name = "", parent, child;
+  std::string name, parent, child;
   Joint::Type type;
   Vec<3> origin;
   Mat<3, 3> rot;
@@ -97,6 +97,7 @@ struct UrdfJoint {
   double stiffness = 0;
   double rotor_inertia = 0;
   double torque_limit = -1.;
+  double velocity_limit = 1e6;
   Vec<4> springMountPos;
 };
 
@@ -108,6 +109,7 @@ struct UrdfLink {
   std::vector<UrdfBody> visual, collision;
   UrdfLinkInertial inertial;
   Vec<4> color_;
+  std::vector<std::shared_ptr<Sensor>> sensor;
 };
 
 class LoadFromURDF2 {
@@ -185,12 +187,12 @@ class LoadFromMjcf {
                               const RaiSimTinyXmlWrapper &node,
                               Shape::Type type,
                               const std::string &typeName,
-                              std::vector<double> &param,
+                              Vec<4> &param,
                               Mat<3, 3> &rot,
                               Vec<3> &pos,
                               const MjcfCompilerSetting& setting);
 
-  static void getMjcfSizeParam(const RaiSimTinyXmlWrapper &g, Shape::Type type, std::vector<double> &param);
+  static void getMjcfSizeParam(const RaiSimTinyXmlWrapper &g, Shape::Type type, Vec<4> &param);
   static void getMjcfPos(const RaiSimTinyXmlWrapper &g, Vec<3> &pos);
   static void posFromFromTo(const RaiSimTinyXmlWrapper &g, Vec<3> &pos);
   static void getMjcfOrientation(const RaiSimTinyXmlWrapper &g, Mat<3, 3> &rot, const std::string& eulerseq, const std::string& anglerep);

@@ -1,5 +1,3 @@
-import subprocess, os
-
 extensions = [
     "breathe",
     'sphinx.ext.autosectionlabel',
@@ -11,13 +9,15 @@ html_theme = "sphinx_rtd_theme"
 
 # General information about the project.
 project = 'raisim'
-copyright = '2021, RaiSim Tech Inc.'
+copyright = '2022, RaiSim Tech Inc.'
 author = 'Yeonjoo Chung and Jemin Hwangbo'
-version = '1.1.0'
-release = '1.1.0'
+version = '1.1.6'
+release = '1.1.6'
+
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'raisim_doc'
 html_show_sourcelink = False
+
 # Breathe Configuration
 breathe_default_project = "raisim"
 autosectionlabel_prefix_document = True

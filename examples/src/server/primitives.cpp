@@ -3,30 +3,23 @@
 
 #include "raisim/RaisimServer.hpp"
 #include "raisim/World.hpp"
-#if WIN32
-#include <timeapi.h>
-#endif
 
 int main(int argc, char* argv[]) {
-  /// create raisim world
   auto binaryPath = raisim::Path::setFromArgv(argv[0]);
-  raisim::World::setActivationKey(binaryPath.getDirectory() + "\\rsc\\activation.raisim");
-#if WIN32
-    timeBeginPeriod(1); // for sleep_for function. windows default clock speed is 1/64 second. This sets it to 1ms.
-#endif
 
   raisim::World world;
-  world.setTimeStep(0.002);
+  world.setTimeStep(0.005);
 
   /// create objects
   auto ground = world.addGround();
-
+  ground->setName("ground");
+  ground->setAppearance("grid");
   std::vector<raisim::Box*> cubes;
   std::vector<raisim::Sphere*> spheres;
   std::vector<raisim::Capsule*> capsules;
   std::vector<raisim::Cylinder*> cylinders;
 
-  static const int N = 3;
+  static const int N = 6;
 
   for (size_t i = 0; i < N; i++) {
     for (size_t j = 0; j < N; j++) {
@@ -38,21 +31,25 @@ int main(int argc, char* argv[]) {
           case 0:
             cubes.push_back(world.addBox(1, 1, 1, 1));
             ob = cubes.back();
+            ob->setAppearance("blue");
             break;
           case 1:
             spheres.push_back(world.addSphere(0.5, 1));
             ob = spheres.back();
+            ob->setAppearance("red");
             break;
           case 2:
-            capsules.push_back(world.addCapsule(0.5, 1., 1));
+            capsules.push_back(world.addCapsule(0.5, 0.5, 1));
             ob = capsules.back();
+            ob->setAppearance("green");
             break;
           case 3:
             cylinders.push_back(world.addCylinder(0.5, 0.5, 1));
             ob = cylinders.back();
+            ob->setAppearance("0.5, 0.5, 0.8, 1.0");
             break;
         }
-        ob->setPosition(-N + 2. * i, -N + 2. * j, N * 2. + 2. * k);
+        ob->setPosition(-N + 2. * i, -N + 2. * j, 1. + 1.5 * k);
       }
     }
   }
@@ -62,7 +59,7 @@ int main(int argc, char* argv[]) {
   server.launchServer();
 
   while (1) {
-    raisim::MSLEEP(2);
+    RS_TIMED_LOOP(int(world.getTimeStep()*1e6))
     server.integrateWorldThreadSafe();
   }
 

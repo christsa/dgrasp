@@ -23,16 +23,16 @@ you can write
 
 The available logging macros are
 
-- RSINFO(msg): Prints out the message in white.
-- RSWARN(msg): Prints out the message in yellow.
-- RSFATAL(msg): Prints out the message in red then execute the fatal function
-- RSINFO_IF(con, msg): Prints out the message in white if the condition is true.
-- RSWARN_IF(con, msg): Prints out the message in yellow if the condition is true.
-- RSFATAL_IF(con, msg): Prints out the message in red and calls the fatal function if the condition is true.
-- RSASSERT(con, msg): Prints out the message in red and calls the fatal function if the condition is false.
-- RSRETURN_IF(con, msg): Prints out the message in white then call ``return`` if the condition is true.
-- RSISNAN(val): Prints out "${val} is nan" then calls the fatal function if the value is nan (not a number).
-- RSISNAN_MSG(val, msg): Prints out the message then calls the fatal function if the value is nan (not a number).
+- ``RSINFO(msg)``: Prints out the message in white.
+- ``RSWARN(msg)``: Prints out the message in yellow.
+- ``RSFATAL(msg)``: Prints out the message in red then execute the fatal function
+- ``RSINFO_IF(con, msg)``: Prints out the message in white if the condition is true.
+- ``RSWARN_IF(con, msg)``: Prints out the message in yellow if the condition is true.
+- ``RSFATAL_IF(con, msg)``: Prints out the message in red and calls the fatal function if the condition is true.
+- ``RSASSERT(con, msg)``: Prints out the message in red and calls the fatal function if the condition is false.
+- ``RSRETURN_IF(con, msg)``: Prints out the message in white then call ``return`` if the condition is true.
+- ``RSISNAN(val)``: Prints out "${val} is nan" then calls the fatal function if the value is nan (not a number).
+- ``RSISNAN_MSG(val, msg)``: Prints out the message then calls the fatal function if the value is nan (not a number).
 
 The fatal function is ``std::exit(1);`` by default.
 You can override it as
@@ -44,29 +44,18 @@ You can override it as
 The macros actually affect the performance.
 For examples, all ``_IF`` macros will check the boolean and branching might occur.
 
-So if you only want to add the macros only in the debugging mode, add these lines in your CMAKE
+If you do not want to lose performance from branching, there are following debug versions of the macros available
 
-.. code-block:: c
+- ``DRSINFO(msg)``
+- ``DRSWARN(msg)``
+- ``DRSFATAL(msg)``
+- ``DRSINFO_IF(con, msg)``
+- ``DRSWARN_IF(con, msg)``
+- ``DRSFATAL_IF(con, msg)``
+- ``DRSASSERT(con, msg)``
+- ``DRSRETURN_IF(con, msg)``
+- ``DRSISNAN(val)``
+- ``DRSISNAN_MSG(val, msg)``
 
-    # compiling options
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-        add_definitions(-DRSDEBUG)
-    else()
-        remove_definitions(-DRSDEBUG)
-    endif ()
-
-and use these alternative macros instead
-
-- DRSINFO(msg)
-- DRSWARN(msg)
-- DRSFATAL(msg)
-- DRSINFO_IF(con, msg)
-- DRSWARN_IF(con, msg)
-- DRSFATAL_IF(con, msg)
-- DRSASSERT(con, msg)
-- DRSRETURN_IF(con, msg)
-- DRSISNAN(val)
-- DRSISNAN_MSG(val, msg)
-
-These are ignored if the ``-DRSDEBUG`` flag is not set (and because you modified your cmake as above, the flag is set only in the debug mode).
+These are ignored if the build type is not debug.
 

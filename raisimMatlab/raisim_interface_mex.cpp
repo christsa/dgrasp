@@ -75,9 +75,9 @@ void quit() {
   mexUnlock();
 }
 
-#define CHECK_INPUT_SIZE(X) if(nrhs != X) mexErrMsgTxt("Expecting X inputs");
+#define CHECK_INPUT_SIZE(X) if(nrhs != X) printf("Expecting %d inputs. Received %d inputs", X, nrhs);
 
-#define CHECK_OUTPUT_SIZE(X) if(nlhs != X) mexErrMsgTxt("Expecting X outputs");
+#define CHECK_OUTPUT_SIZE(X) if(nlhs != X) printf("Expecting %d outputs. Received %d outputs", X, nlhs);
 
 // number of arguments, check names, etc
 #define ADD_CHECK(X) \
@@ -315,11 +315,10 @@ void mexFunction(
   }
 
   else if (!strcmp("getNonlinearities", cmd)) {
-    CHECK_INPUT_SIZE(1)
+    CHECK_INPUT_SIZE(2)
     CHECK_OUTPUT_SIZE(1)
-    GET_EIGEN_VEC_WITH_CHECK(0, 3)
     GET_AS
-    RETURN_VEC(as->getNonlinearities(vec))
+    RETURN_VEC(as->getNonlinearities(world_->getGravity()))
   }
 
   WORLD_NOARG(integrate1)
@@ -364,7 +363,6 @@ void mexFunction(
       CHECK_INPUT_SIZE(2)
       bodyIdx = 0;
     }
-
     raisim::Vec<3> impulse;
     raisim::Vec<3> position;
     std::vector<raisim::Vec<3>> impulseLists;
@@ -373,22 +371,20 @@ void mexFunction(
 
     // "vector<string>" convert to  matlab "cell" type
     impulse.setZero();
-
-    for (auto& contact : obj->getContacts())
-      if (contact.getlocalBodyIndex() == bodyIdx) {
+    for (auto& contact : obj->getContacts()) {
+      if (contact.getlocalBodyIndex() == bodyIdx && !contact.skip()) {
         raisim::matvecmul(contact.getContactFrame(), contact.getImpulse(), impulse);
-        if(!contact.isObjectA())
+        if (!contact.isObjectA())
           impulse *= -1.;
         impulse /= world_->getTimeStep();
         impulseLists.push_back(impulse);
         positionLists.push_back(contact.getPosition());
-        nameLists.push_back(world_->getObjList()[contact.getPairObjectIndex()]->getName());        
+        nameLists.push_back(world_->getObjList()[contact.getPairObjectIndex()]->getName());
       }
-
+    }
     plhs[0] = mxCreateDoubleMatrix(3, impulseLists.size(), mxREAL);
     plhs[1] = mxCreateDoubleMatrix(3, impulseLists.size(), mxREAL);
     plhs[2] = mxCreateCellMatrix(impulseLists.size(), 1);
-
     for (size_t k = 0; k < impulseLists.size(); k++) {
       memcpy(mxGetPr(plhs[0]) + k * 3, impulseLists[k].ptr(),
              sizeof(double) * 3);

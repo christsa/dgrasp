@@ -3,16 +3,9 @@
 
 #include "raisim/RaisimServer.hpp"
 #include "raisim/World.hpp"
-#if WIN32
-#include <timeapi.h>
-#endif
 
 int main(int argc, char* argv[]) {
   auto binaryPath = raisim::Path::setFromArgv(argv[0]);
-  raisim::World::setActivationKey(binaryPath.getDirectory() + "\\rsc\\activation.raisim");
-#if WIN32
-    timeBeginPeriod(1); // for sleep_for function. windows default clock speed is 1/64 second. This sets it to 1ms.
-#endif
 
   raisim::World world;
   world.setTimeStep(0.002);
@@ -40,7 +33,7 @@ int main(int argc, char* argv[]) {
   server.focusOn(robot);
 
   for (int i=0; i<20000000; i++) {
-    std::this_thread::sleep_for(std::chrono::microseconds(10000));
+    RS_TIMED_LOOP(int(world.getTimeStep()*1e6))
     server.integrateWorldThreadSafe();
   }
 

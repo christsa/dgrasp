@@ -1,5 +1,5 @@
 #############################
-RaiSim
+RaiSim v1.1.6
 #############################
 
 RaiSim is a cross-platform multi-body physics engine for robotics and AI.
@@ -33,13 +33,13 @@ The geometric model is created using the Full-body musculoskeletal model in Raja
   :alt: anymals
   :width: 600
 
-**ANYmal B and C robots**, by ANYbotics AG.
+**ANYmal B and C robots**, by ANYbotics AG.**
 
 .. image:: image/trackedRobot.gif
   :alt: trackedRobot
   :width: 600
 
-**Simple URDF by RaiSim Tech.**
+**URDF Example**
 
 .. toctree::
    :maxdepth: 1
@@ -57,7 +57,9 @@ The geometric model is created using the Full-body musculoskeletal model in Raja
 
    sections/Introduction
    sections/Installation
+   sections/Visualizers
    sections/ConventionsAndNotations
+   sections/Determinism
    sections/Math
    sections/LoggingSystem
    sections/WorldSystem
@@ -69,6 +71,7 @@ The geometric model is created using the Full-body musculoskeletal model in Raja
    sections/HeightMap
    sections/Constraints
    sections/RayTest
+   sections/Sensors
 
 .. toctree::
    :maxdepth: 1
@@ -77,4 +80,5 @@ The geometric model is created using the Full-body musculoskeletal model in Raja
    sections/RaisimGymTorch
    sections/RaiSimPy
    sections/RaisimUnity
+   sections/RaisimUnreal
    sections/RaiSimMatlab

@@ -23,6 +23,7 @@ execute_process(
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(UNIX)
+    install(TARGETS raisimpy DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE})
     set_target_properties(raisimpy
             PROPERTIES
             ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/lib"
@@ -30,11 +31,11 @@ if(UNIX)
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/lib"
             )
 else()
+    target_link_libraries(raisimpy PRIVATE Ws2_32)
     set_target_properties(raisimpy
             PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/mt_release/bin"
-            LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/mt_release/bin"
-            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/mt_release/bin"
+            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/bin"
+            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/bin"
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../raisim/${RAISIM_OS}/bin"
             )
-    target_link_libraries(raisimpy PRIVATE Ws2_32)
 endif()

@@ -132,9 +132,13 @@ class DynamicArray{
 #ifdef _WIN32
     v = static_cast<double *>(
         Eigen::internal::handmade_aligned_malloc(size * sizeof(double)));
-#elif __linux__
+#endif
+
+#ifdef __linux__
     v = static_cast<double*>(aligned_alloc(32, size * sizeof(double)));
-#elif __APPLE__
+#endif
+
+#ifdef __APPLE__
     v = static_cast<double*>(aligned_alloc(32, size * sizeof(double)));
 #endif
   }
@@ -142,9 +146,13 @@ class DynamicArray{
   void dealloc() {
 #ifdef __APPLE__
     if (v) aligned_free(v);
-#elif __linux__
+#endif
+
+#ifdef __linux__
     free(v);
-#elif WIN32
+#endif
+
+#ifdef _WIN32
     if (v) Eigen::internal::handmade_aligned_free(v);
 #endif
   }
@@ -495,7 +503,6 @@ class SparseJacobian {
 
   inline void resize(size_t cols) {
     size = cols;
-    DRSFATAL_IF(cols<1, "assigning zero volume")
     if(capacity < cols){
       v.resize(3, cols);
       v.setZero();
@@ -1441,6 +1448,12 @@ inline void cross_skip3_skip3_negative(const double *vec1_skip, const double *ve
 }
 
 inline void crossThenAdd(const Vec<3> &vec1, const Vec<3> &vec2, Vec<3> &vec) {
+  vec[0] += vec1[1] * vec2[2] - vec1[2] * vec2[1];
+  vec[1] += vec1[2] * vec2[0] - vec1[0] * vec2[2];
+  vec[2] += vec1[0] * vec2[1] - vec1[1] * vec2[0];
+}
+
+inline void crossThenAdd(const Vec<3> &vec1, const Vec<3> &vec2, double* vec) {
   vec[0] += vec1[1] * vec2[2] - vec1[2] * vec2[1];
   vec[1] += vec1[2] * vec2[0] - vec1[0] * vec2[2];
   vec[2] += vec1[0] * vec2[1] - vec1[1] * vec2[0];

@@ -6,6 +6,7 @@
 
 #ifndef RAISIM_HELPER_HPP
 #define RAISIM_HELPER_HPP
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -18,16 +19,18 @@
 
 #include <vector>
 #include <stdexcept>
-#include <stddef.h>
+#include <cstddef>
+#include <chrono>
 #include "raisim_message.hpp"
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "raisim/Path.hpp"
 
+
 namespace raisim {
 
-inline std::string separator() {
+static inline std::string separator() {
 #ifdef _WIN32
   return "\\";
 #else
@@ -35,14 +38,55 @@ inline std::string separator() {
 #endif
 }
 
-inline void MSLEEP(int sleepMs)
+#ifdef _WIN32
+
+static inline uint64_t GetPerfFrequency() {
+  ::LARGE_INTEGER freq;
+  ::QueryPerformanceFrequency(&freq);
+  return freq.QuadPart;
+}
+
+static inline uint64_t PerfFrequency() {
+  static uint64_t xFreq = GetPerfFrequency();
+  return xFreq;
+}
+
+static inline uint64_t PerfCounter() {
+  ::LARGE_INTEGER counter;
+  ::QueryPerformanceCounter(&counter);
+  return counter.QuadPart;
+}
+
+static uint64_t NowInUs() {
+  return static_cast<uint64_t>(
+      static_cast<double>(PerfCounter()) * 1000000 / PerfFrequency());
+}
+
+#endif
+
+static inline void MSLEEP(int sleepMs)
 {
 #ifdef _WIN32
-  Sleep(sleepMs);
+  auto start = NowInUs();
+  while ((NowInUs() - start) < sleepMs * 1000) {
+  }
 #else
   usleep(sleepMs * 1000);   // usleep takes sleep time in us (1 millionth of a second)
 #endif
 }
+
+static inline void USLEEP(int sleepMs)
+{
+#ifdef _WIN32
+  auto start = NowInUs();
+  while ((NowInUs() - start) < sleepMs) {
+  }
+#else
+  usleep(sleepMs);   // usleep takes sleep time in us (1 millionth of a second)
+#endif
+}
+
+
 
 /* returns the file name without extension */
 inline std::string getBaseFileName(const std::string& fullPath) {
@@ -88,6 +132,26 @@ inline bool directoryExists (const std::string& name) {
   return (stat (name.c_str(), &buffer) == 0);
 }
 
+class TimedLoop {
+ public:
+  TimedLoop(uint64_t loop_time_in_us) {
+    loopTimeInUs = loop_time_in_us;
+    begin = std::chrono::steady_clock::now();
+  }
+
+  ~TimedLoop() {
+    auto end = std::chrono::steady_clock::now();
+    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+    if (loopTimeInUs > microseconds)
+      USLEEP(int(loopTimeInUs - microseconds));
+  }
+
+  std::chrono::steady_clock::time_point begin;
+  uint64_t loopTimeInUs;
+};
+
+#define RS_TIMED_LOOP(US) auto raisim_arb_variable_name123 = raisim::TimedLoop(US);
+
 void read_png_file(const char *file_name, int &width, int &height, std::vector<double> &values, double scale, double zOffset);
 
 template<typename T, std::size_t RSALOCATOR_ALIGNMENT>
@@ -110,7 +174,7 @@ class AlignedAllocator {
     return &s;
   }
 
-  std::size_t max_size() const {
+  [[nodiscard]] std::size_t max_size() const {
     return (static_cast<std::size_t>(0) - static_cast<std::size_t>(1)) / sizeof(T);
   }
 
@@ -139,20 +203,20 @@ class AlignedAllocator {
 
   AlignedAllocator() = default;
 
-  AlignedAllocator(const AlignedAllocator &) {}
+  AlignedAllocator(const AlignedAllocator &) = default;
 
   template<typename U>
   AlignedAllocator(const AlignedAllocator<U, RSALOCATOR_ALIGNMENT> &) {}
 
-  ~AlignedAllocator() {}
+  ~AlignedAllocator() = default;
 
   T *allocate(const std::size_t n) const {
     if (n == 0)
-      return NULL;
+      return nullptr;
 
     void *const pv = _mm_malloc(n * sizeof(T), RSALOCATOR_ALIGNMENT);
 
-    if (pv == NULL) {
+    if (pv == nullptr) {
       throw std::bad_alloc();
     }
 

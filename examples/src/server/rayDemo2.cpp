@@ -3,17 +3,9 @@
 
 #include "raisim/RaisimServer.hpp"
 #include "raisim/World.hpp"
-#if WIN32
-#include <timeapi.h>
-#endif
 
 int main(int argc, char* argv[]) {
-  /// create raisim world
   auto binaryPath = raisim::Path::setFromArgv(argv[0]);
-  raisim::World::setActivationKey(binaryPath.getDirectory() + "\\rsc\\activation.raisim");
-#if WIN32
-    timeBeginPeriod(1); // for sleep_for function. windows default clock speed is 1/64 second. This sets it to 1ms.
-#endif
 
   raisim::World world;
   world.setTimeStep(0.001);
@@ -33,6 +25,7 @@ int main(int argc, char* argv[]) {
   auto hm = world.addHeightMap(0.0, 0.0, terrainProperties);
   auto robot = world.addArticulatedSystem(binaryPath.getDirectory() + "/rsc/husky/husky.urdf");
   robot->setName("smb");
+  hm->setAppearance("soil2");
   Eigen::VectorXd gc(robot->getGeneralizedCoordinateDim()), gv(robot->getDOF()), damping(robot->getDOF());
   gc.setZero(); gv.setZero();
   gc.segment<7>(0) << 0, 0, 2, 1, 0, 0, 0;
@@ -44,20 +37,24 @@ int main(int argc, char* argv[]) {
 
   /// launch raisim server
   raisim::RaisimServer server(&world);
-  server.launchServer();
-  std::vector<raisim::Visuals *> scans;
-  server.focusOn(robot);
-  int scanSize1 = 8;
-  int scanSize2 = 25;
 
-  for(int i=0; i<scanSize1; i++)
-    for(int j=0; j<scanSize2; j++)
-      scans.push_back(server.addVisualBox("box" + std::to_string(i) + "/" + std::to_string(j), 0.1, 0.1, 0.1, 1, 0, 0));
+  /// this method should be called before server launch
+  auto scans = server.addInstancedVisuals("scan points",
+                                          raisim::Shape::Box,
+                                          {0.05, 0.05, 0.05},
+                                          {1,0,0,1},
+                                          {0,1,0,1});
+  int scanSize1 = 40;
+  int scanSize2 = 50;
+
+  scans->resize(scanSize1*scanSize2);
+  server.launchServer();
+  server.focusOn(robot);
 
   Eigen::Vector3d direction;
 
   for(int time=0; time<1000000; time++) {
-    raisim::MSLEEP(1.0);
+    RS_TIMED_LOOP(int(world.getTimeStep()*1e6))
     server.integrateWorldThreadSafe();
     raisim::Vec<3> lidarPos; raisim::Mat<3,3> lidarOri;
     robot->getFramePosition("imu_joint", lidarPos);
@@ -72,10 +69,13 @@ int main(int argc, char* argv[]) {
         Eigen::Vector3d rayDirection;
         rayDirection = lidarOri.e() * direction;
         auto &col = world.rayTest(lidarPos.e(), rayDirection, 30);
-        if (col.size() > 0)
-          scans[i * scanSize2 + j]->setPosition(col[0].getPosition());
+        if (col.size() > 0) {
+          scans->setPosition(i * scanSize2 + j, col[0].getPosition());
+          float length = (col[0].getPosition() - lidarPos.e()).norm();
+          scans->setColorWeight(i * scanSize2 + j, std::min(length/15.f, 1.0f));
+        }
         else
-          scans[i * scanSize2 + j]->setPosition({0, 0, 100});
+          scans->setPosition(i*scanSize2+j, {0, 0, 100});
       }
     }
 
@@ -84,7 +84,8 @@ int main(int argc, char* argv[]) {
 
     if(fabs(gc[0])>35. || fabs(gc[1])>35.) {
       gc.segment<7>(0) << 0, 0, 2, 1, 0, 0, 0;
-      robot->setGeneralizedCoordinate(gc);
+      gv.setRandom();
+      robot->setState(gc, gv);
     }
   }
 

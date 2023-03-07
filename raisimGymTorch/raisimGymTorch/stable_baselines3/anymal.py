@@ -18,7 +18,7 @@ task_path = stb_path + "/../env/envs/rsg_anymal"
 cfg = YAML().load(open(task_path + "/cfg.yaml", 'r'))
 
 # create environment from the configuration file
-env = VecEnv(rsg_anymal.RaisimGymEnv(rsc_path, dump(cfg['environment'], Dumper=RoundTripDumper)), cfg['environment'])
+env = VecEnv(rsg_anymal.RaisimGymEnv(rsc_path, dump(cfg['environment'], Dumper=RoundTripDumper)), normalize_ob=True)
 obs = env.reset()
 
 n_steps = int(cfg['environment']['max_time'] / cfg['environment']['control_dt'])

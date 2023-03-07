@@ -4,16 +4,9 @@
 #include "raisim/RaisimServer.hpp"
 #include "raisim/World.hpp"
 #include <random>
-#if WIN32
-#include <timeapi.h>
-#endif
 
 int main(int argc, char* argv[]) {
   auto binaryPath = raisim::Path::setFromArgv(argv[0]);
-  raisim::World::setActivationKey(binaryPath.getDirectory() + "\\rsc\\activation.raisim");
-#if WIN32
-    timeBeginPeriod(1); // for sleep_for function. windows default clock speed is 1/64 second. This sets it to 1ms.
-#endif
 
   /// create raisim world
   raisim::World world;
@@ -50,14 +43,18 @@ int main(int argc, char* argv[]) {
   Eigen::VectorXd genForce(18);
 
   for (int i=0; i<200000000; i++) {
-    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+    RS_TIMED_LOOP(int(world.getTimeStep()*1e6))
     if(i%2000==0)
       for(int j=0; j<18; j++)
         genForce[j] = unif(re);
 
     anymalB->setGeneralizedForce(genForce);
     anymalC->setGeneralizedForce(genForce);
+    for (auto c : anymalC->getContacts())
+      std::cout<< "impulse "<<c.getImpulse() <<std::endl;
+
     server.integrateWorldThreadSafe();
+
   }
 
   server.killServer();
