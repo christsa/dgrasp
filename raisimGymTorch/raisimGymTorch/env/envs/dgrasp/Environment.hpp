@@ -59,6 +59,7 @@ namespace raisim {
             obj_quat.setZero();obj_quat[0] = 1.0;
             Obj_linvel.setZero(); Obj_qvel.setZero();
             rel_obj_vel.setZero(); rel_obj_qvel.setZero();
+            rel_body_table_pos_.setZero();
             bodyLinearVel_.setZero(); bodyAngularVel_.setZero();
             init_root_.setZero(); init_or_.setZero(); init_rot_.setZero();
             obj_pose_.setZero(); obj_pos_init_.setZero(7);
@@ -88,7 +89,7 @@ namespace raisim {
             mano_->setGeneralizedCoordinate(Eigen::VectorXd::Zero(gcDim_));
 
             /// MUST BE DONE FOR ALL ENVIRONMENTS (CURRENTLY MANUALLY)
-            obDim_ =  279;
+            obDim_ = gcDim_ + gvDim_ + final_ee_pos_.size() + final_pose_.size() + num_contacts*3 + rel_objpalm_pos_.size() + rel_obj_pose_.size() + rel_obj_pos_.size() + rel_obj_vel.size() + rel_obj_qvel.size() + rel_body_table_pos_.size();
             obDouble_.setZero(obDim_);
 
             root_guided =  cfg["root_guided"].As<bool>();
