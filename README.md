@@ -1,4 +1,4 @@
-# D-Grasp: Physically Plausible Dynamic Grasp Synthesis for Hand-Object Interactions
+![image](https://github.com/christsa/dgrasp/assets/32132810/c452d091-4f3c-4837-bd1c-74c68ab95aa2)# D-Grasp: Physically Plausible Dynamic Grasp Synthesis for Hand-Object Interactions
 ## [Paper](https://arxiv.org/pdf/2112.03028.pdf) | [Video](https://youtu.be/5OqbDq-pgLc) | [Project Page](https://eth-ait.github.io/d-grasp/)
 
 <img src="docs/image/fig_teaser.png" /> 
@@ -14,6 +14,12 @@ Official code release for the CVPR 2022 paper [*D-Grasp: Physically Plausible Dy
 6. [Evaluation](#evaluation)
 6. [Citation](#citation)
 6. [License](#license)
+
+## Checkout D-Grasp Follow-ups
+
+👐🏼 [ArtiGrasp](https://eth-ait.github.io/artigrasp/) - Learns two-handed grasping and articulation of objects.
+
+🧍🏻 [Full-Body Grasping](https://eth-ait.github.io/phys-fullbody-grasp/) - Learns full-body grasping and manipulation of objects, including trajectory-following.
 
 ## RaiSim Update 
 
